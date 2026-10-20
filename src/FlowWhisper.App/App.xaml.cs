@@ -156,6 +156,17 @@ public partial class App : Application
         {
             LoadCleanupServiceInBackground(_settings.CleanupDevice);
         }
+
+        // A second launch exits right away and signals this; show Settings so the click
+        // visibly did something.
+        new Thread(() =>
+        {
+            while (Program.ShowSettingsRequested.WaitOne())
+            {
+                _uiDispatcher!.TryEnqueue(OpenSettingsWindow);
+            }
+        })
+        { IsBackground = true, Name = "ShowSettingsListener" }.Start();
     }
 
     /// <summary>

@@ -4,6 +4,15 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-10-21
+
+### Fixed
+
+- FlowWhisper could run twice, for example after the installer started it and it was then
+  opened from the Start menu. Both copies reacted to the dictation key at once, so the bar
+  could hang on "Listening..." and one copy could use outdated settings, such as the wrong
+  language. Now only one copy runs, and starting it again opens Settings in the running one.
+
 ## [0.1.1] - 2026-10-20
 
 ### Fixed
@@ -34,5 +43,6 @@ First public release.
 - Detection of silent microphones and filtering of Whisper hallucinations.
 - Per-user installer (Velopack) and a portable zip.
 
+[0.1.2]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ehsahog/FlowWhisper/releases/tag/v0.1.0
