@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- All texts are set from App.Strings in code-behind (ApplyTexts) so the page follows
+     the UI language, including switching live when it's changed in Settings. -->
+<Page
+    x:Class="FlowWhisper_App.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:FlowWhisper_App"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <x:Double x:Key="LabelWidth">180</x:Double>
+    </Page.Resources>
+
+    <ScrollViewer>
+        <Grid Padding="24" RowSpacing="8" MaxWidth="600">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Spacing="12">
+                <TextBlock Text="FlowWhisper" Style="{StaticResource TitleTextBlockStyle}" />
+
+                <!-- First-run / on-demand downloads. Shown only while something is missing. -->
+                <Border
+                    x:Name="WhisperSetupCard"
+                    Visibility="Collapsed"
+                    Padding="16"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="WhisperSetupTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock x:Name="WhisperSetupText" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="WhisperDownloadButton" Style="{StaticResource AccentButtonStyle}" Click="OnWhisperDownloadClick" />
+                            <TextBlock x:Name="WhisperProgressText" VerticalAlignment="Center" Opacity="0.7" />
+                        </StackPanel>
+                        <ProgressBar x:Name="WhisperProgressBar" Visibility="Collapsed" Maximum="1" />
+                    </StackPanel>
+                </Border>
+
+                <Border
+                    x:Name="CleanupSetupCard"
+                    Visibility="Collapsed"
+                    Padding="16"
+                    CornerRadius="8"
+                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1">
+                    <StackPanel Spacing="8">
+                        <TextBlock x:Name="CleanupSetupTitle" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                        <TextBlock x:Name="CleanupSetupText" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Button x:Name="CleanupDownloadButton" Click="OnCleanupDownloadClick" />
+                            <TextBlock x:Name="CleanupProgressText" VerticalAlignment="Center" Opacity="0.7" />
+                        </StackPanel>
+                        <ProgressBar x:Name="CleanupProgressBar" Visibility="Collapsed" Maximum="1" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Settings -->
+            <StackPanel Grid.Row="1" Margin="0,16,0,0" Spacing="12">
+                <TextBlock x:Name="SettingsHeader" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="AppLanguageLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="AppLanguageComboBox" Width="280" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="DictationLanguageLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="DictationLanguageComboBox" Width="280" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="HotkeyLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="HotkeyComboBox" Width="280" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="ModelLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="ModelComboBox" Width="280" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="WhisperDeviceLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="WhisperDeviceComboBox" Width="280" />
+                </StackPanel>
+
+                <ToggleSwitch x:Name="LivePreviewToggle" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="MicrophoneLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="MicComboBox" Width="280" DisplayMemberPath="Name" />
+                </StackPanel>
+
+                <ToggleSwitch x:Name="CleanupToggle" />
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="CleanupDeviceLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="CleanupDeviceComboBox" Width="280" />
+                </StackPanel>
+                <TextBlock x:Name="CleanupHelpText" Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
+                <ToggleSwitch x:Name="StartAtLoginToggle" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <Button x:Name="SaveButton" Click="OnSaveButtonClick" />
+                    <TextBlock x:Name="SaveStatusText" VerticalAlignment="Center" Opacity="0.7" />
+                </StackPanel>
+
+                <TextBlock x:Name="ChangesApplyText" Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <!-- History -->
+            <StackPanel Grid.Row="2" Margin="0,24,0,0" Orientation="Horizontal" Spacing="12">
+                <TextBlock x:Name="HistoryHeader" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                <Button x:Name="ClearHistoryButton" Click="OnClearHistoryButtonClick" />
+            </StackPanel>
+            <ListView Grid.Row="3" x:Name="HistoryListView" Height="300">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="0,4" Spacing="2">
+                            <TextBlock Text="{Binding Text}" TextWrapping="Wrap" />
+                            <TextBlock
+                                Opacity="0.6"
+                                FontSize="12"
+                                Text="{Binding Subtitle}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </ScrollViewer>
+</Page>

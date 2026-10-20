@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FlowWhisper.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "FlowWhisper.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
