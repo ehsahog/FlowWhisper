@@ -23,7 +23,7 @@ namespace FlowWhisper_App;
 /// </summary>
 public partial class App : Application
 {
-    private Window? _mainWindow;
+    private MainWindow? _mainWindow;
     private TaskbarIcon? _trayIcon;
     private FlowBarWindow? _flowBar;
     private IHotkeyService? _hotkeyService;
@@ -602,7 +602,11 @@ public partial class App : Application
         (_historyStore as IDisposable)?.Dispose();
         _trayIcon?.Dispose();
         _flowBar?.Close();
-        _mainWindow?.Close();
+        if (_mainWindow is not null)
+        {
+            _mainWindow.AllowClose = true;
+            _mainWindow.Close();
+        }
         Environment.Exit(0);
     }
 }

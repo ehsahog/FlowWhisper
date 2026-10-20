@@ -14,6 +14,9 @@ namespace FlowWhisper_App;
 /// </summary>
 public sealed partial class MainWindow : Window
 {
+    /// <summary>Set when the app exits; until then closing the window just hides it.</summary>
+    public bool AllowClose { get; set; }
+
     public MainWindow()
     {
         InitializeComponent();
@@ -22,6 +25,17 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
 
         AppWindow.SetIcon("Assets/AppIcon.ico");
+
+        // The close button only hides the window: the app keeps living in the tray, and
+        // this window's HWND is the clipboard owner for pasting, so it must stay alive.
+        AppWindow.Closing += (sender, args) =>
+        {
+            if (!AllowClose)
+            {
+                args.Cancel = true;
+                sender.Hide();
+            }
+        };
 
         // An absolute file URI: ms-appx:/// paths didn't resolve in the unpackaged app.
         AppTitleBar.IconSource = new ImageIconSource
