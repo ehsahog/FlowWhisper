@@ -15,11 +15,15 @@ public sealed class OpenVinoWhisperService : IWhisperTranscriptionService, IDisp
     private readonly SemaphoreSlim _gate = new(1, 1);
     private nint _pipeline;
 
+    /// <summary>Language codes this model knows, e.g. small lacks "yue" that large-v3 has.</summary>
+    private readonly HashSet<string> _languages;
+
     public string Device { get; }
 
     public OpenVinoWhisperService(string modelDirectory, string device, string runtimeDirectory, string cacheDirectory)
     {
         Device = device;
+        _languages = ReadModelLanguages(modelDirectory);
         OpenVinoGenAi.Initialize(runtimeDirectory);
         Directory.CreateDirectory(cacheDirectory);
         OpenVinoGenAi.Check(
@@ -56,7 +60,8 @@ public sealed class OpenVinoWhisperService : IWhisperTranscriptionService, IDisp
         {
             // Start from the model's own config: it carries the language/task token maps.
             OpenVinoGenAi.Check(OpenVinoGenAi.WhisperGetConfig(_pipeline, out config), "whisper_get_generation_config");
-            if (language != "auto")
+            // A language the model doesn't know would fail the whole call; detect instead.
+            if (language != "auto" && _languages.Contains(language))
             {
                 OpenVinoGenAi.Check(OpenVinoGenAi.WhisperConfigSetLanguage(config, $"<|{language}|>"), "whisper_set_language");
             }
@@ -76,6 +81,30 @@ public sealed class OpenVinoWhisperService : IWhisperTranscriptionService, IDisp
             if (results != 0) OpenVinoGenAi.WhisperResultsFree(results);
             if (config != 0) OpenVinoGenAi.WhisperConfigFree(config);
         }
+    }
+
+    /// <summary>Reads the "&lt;|sv|&gt;"-style keys of lang_to_id in the model's generation_config.json.</summary>
+    internal static HashSet<string> ReadModelLanguages(string modelDirectory)
+    {
+        var languages = new HashSet<string>(StringComparer.Ordinal);
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(
+                File.ReadAllText(Path.Combine(modelDirectory, "generation_config.json")));
+            if (doc.RootElement.TryGetProperty("lang_to_id", out var map))
+            {
+                foreach (var entry in map.EnumerateObject())
+                {
+                    languages.Add(entry.Name.Trim('<', '|', '>'));
+                }
+            }
+        }
+        catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
+        {
+            // Without the map every language falls back to detection, which still works.
+        }
+
+        return languages;
     }
 
     public void Dispose()

@@ -4,6 +4,20 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-10-21
+
+### Added
+
+- "Language you speak" now offers all 100 languages Whisper can transcribe, each shown
+  by its own name and sorted alphabetically. Previously it offered eight.
+- On a Windows display language that Whisper supports, dictation now follows it by
+  default, e.g. Japanese, Polish or Filipino (Tagalog).
+
+### Fixed
+
+- If the selected model doesn't know the chosen language (the small model lacks
+  Cantonese), FlowWhisper now detects the language automatically instead of failing.
+
 ## [0.1.2] - 2026-10-21
 
 ### Fixed
@@ -43,6 +57,7 @@ First public release.
 - Detection of silent microphones and filtering of Whisper hallucinations.
 - Per-user installer (Velopack) and a portable zip.
 
+[0.1.3]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ehsahog/FlowWhisper/releases/tag/v0.1.0

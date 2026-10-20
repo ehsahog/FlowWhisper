@@ -20,8 +20,9 @@ for Swedish dictation, and it works in Whisper's other languages too.
 - **Pastes into any app**: your clipboard is restored afterwards and the dictation is kept
   out of clipboard history.
 - **Choose your language**: the app UI follows Windows (Swedish or English), and you pick
-  the language you speak separately (Swedish, English, Norwegian, Danish, Finnish, German,
-  French, Spanish, or automatic detection).
+  the language you speak separately: any of Whisper's 100 languages, or automatic detection.
+  Recognition quality varies a lot between languages, and Swedish, English and the large
+  European languages work best.
 - **Optional AI cleanup** (experimental): Phi-3.5-mini removes filler words and fixes
   punctuation. A guard rejects any result that adds or drops words.
 - **History** of recent dictations, stored locally in SQLite.

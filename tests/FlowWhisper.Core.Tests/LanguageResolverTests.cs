@@ -21,9 +21,27 @@ public class LanguageResolverTests
     [InlineData("sv-SE", "sv")]
     [InlineData("en-GB", "en")]
     [InlineData("nb-NO", "no")]
-    [InlineData("ja-JP", "auto")]
+    [InlineData("nn-NO", "nn")]
+    [InlineData("ja-JP", "ja")]
+    [InlineData("fil-PH", "tl")]
+    [InlineData("zu-ZA", "auto")]
     public void DictationFollowsWindowsWhenSupported(string windows, string expected) =>
         Assert.Equal(expected, LanguageResolver.ResolveDictation("", new CultureInfo(windows)));
+
+    [Fact]
+    public void DictationListHasAllWhisperLanguagesOnceInAlphabeticalOrder()
+    {
+        var languages = LanguageResolver.DictationLanguages;
+        Assert.Equal(100, languages.Select(l => l.Code).Distinct().Count());
+        Assert.Equal(languages.Count, languages.Select(l => l.Code).Distinct().Count());
+
+        var comparer = StringComparer.Create(CultureInfo.InvariantCulture, ignoreCase: true);
+        for (var i = 1; i < languages.Count; i++)
+        {
+            Assert.True(comparer.Compare(languages[i - 1].NativeName, languages[i].NativeName) <= 0,
+                $"{languages[i - 1].NativeName} before {languages[i].NativeName}");
+        }
+    }
 
     [Fact]
     public void DictationOverrideWins() =>
