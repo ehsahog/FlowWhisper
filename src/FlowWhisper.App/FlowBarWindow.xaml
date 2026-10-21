@@ -12,11 +12,12 @@
          window is never activated (it must not take focus from the app being dictated into). -->
 
     <Grid x:Name="Root">
-        <!-- Tint, depth and sheen: faded together by the transparency setting. -->
+        <!-- Flat frosted glass (variant D): the acrylic plus one tint and nothing else, no
+             sheen, streak, rim or hairline. The tint is faded by the transparency setting. -->
         <Grid x:Name="TintLayers" IsHitTestVisible="False">
-            <!-- Tinted body: a cool blue-lavender wash, deeper towards the bottom, so the glass
-                 reads as a distinct object even over white apps (where acrylic alone looks white). -->
-            <Rectangle IsHitTestVisible="False">
+            <!-- A cool blue-lavender wash, deeper towards the bottom, so the glass reads as
+                 a distinct object even over white apps (where acrylic alone looks white). -->
+            <Rectangle>
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="0.35,1">
                         <GradientStop Offset="0" Color="#59D6E4FA" />
@@ -25,61 +26,7 @@
                     </LinearGradientBrush>
                 </Rectangle.Fill>
             </Rectangle>
-
-            <!-- Depth: a soft inner shadow along the bottom, as under a curved surface. -->
-            <Rectangle IsHitTestVisible="False">
-                <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Offset="0.6" Color="#00203060" />
-                        <GradientStop Offset="1" Color="#2E203060" />
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-            </Rectangle>
-
-            <!-- Specular sheen across the top half, like light catching curved glass. -->
-            <Rectangle IsHitTestVisible="False">
-                <Rectangle.Fill>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                        <GradientStop Offset="0" Color="#E6FFFFFF" />
-                        <GradientStop Offset="0.38" Color="#33FFFFFF" />
-                        <GradientStop Offset="0.40" Color="#00FFFFFF" />
-                    </LinearGradientBrush>
-                </Rectangle.Fill>
-            </Rectangle>
         </Grid>
-
-        <!-- Highlight streak: a thin bright line just under the top edge. -->
-        <Rectangle
-            Height="1.5"
-            Margin="14,3,14,0"
-            VerticalAlignment="Top"
-            IsHitTestVisible="False"
-            RadiusX="1"
-            RadiusY="1">
-            <Rectangle.Fill>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Offset="0" Color="#00FFFFFF" />
-                    <GradientStop Offset="0.3" Color="#FFFFFFFF" />
-                    <GradientStop Offset="0.7" Color="#FFFFFFFF" />
-                    <GradientStop Offset="1" Color="#00FFFFFF" />
-                </LinearGradientBrush>
-            </Rectangle.Fill>
-        </Rectangle>
-
-        <!-- Outer hairline: separates the glass from light backgrounds. -->
-        <Border IsHitTestVisible="False" BorderThickness="1" CornerRadius="8" BorderBrush="#4D2A3A5A" />
-
-        <!-- Iridescent rim just inside it, like light refracting at the glass edge. -->
-        <Border IsHitTestVisible="False" Margin="1" BorderThickness="1.5" CornerRadius="7">
-            <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#FFFFFFFF" />
-                    <GradientStop Offset="0.35" Color="#CCB8E2FF" />
-                    <GradientStop Offset="0.65" Color="#B3D9C2FF" />
-                    <GradientStop Offset="1" Color="#E6FFFFFF" />
-                </LinearGradientBrush>
-            </Border.BorderBrush>
-        </Border>
 
         <Grid Padding="20,12" RowSpacing="6">
             <Grid.RowDefinitions>

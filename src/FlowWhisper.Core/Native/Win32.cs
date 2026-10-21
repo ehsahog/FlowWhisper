@@ -42,6 +42,11 @@ internal static class Win32
     [DllImport("user32.dll")]
     public static extern nint GetForegroundWindow();
 
+    public const uint MAPVK_VK_TO_VSC = 0;
+
+    [DllImport("user32.dll")]
+    public static extern uint MapVirtualKey(uint code, uint mapType);
+
     [DllImport("user32.dll")]
     public static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
 

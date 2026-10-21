@@ -91,12 +91,17 @@ public sealed class TextInjectionService(nint clipboardOwner) : ITextInjectionSe
 
     private static bool SendCtrlV()
     {
+        // Both the virtual key (what local apps read) and the hardware scan code: remote-desktop
+        // clients such as Omnissa Horizon forward scan codes to the remote machine, and with
+        // scan code 0 the remote side received an empty keystroke and never pasted.
+        var ctrlScan = (ushort)Win32.MapVirtualKey(Win32.VK_CONTROL, Win32.MAPVK_VK_TO_VSC);
+        var vScan = (ushort)Win32.MapVirtualKey(Win32.VK_V, Win32.MAPVK_VK_TO_VSC);
         var inputs = new[]
         {
-            KeyboardInput(Win32.VK_CONTROL, 0, 0),
-            KeyboardInput(Win32.VK_V, 0, 0),
-            KeyboardInput(Win32.VK_V, 0, Win32.KEYEVENTF_KEYUP),
-            KeyboardInput(Win32.VK_CONTROL, 0, Win32.KEYEVENTF_KEYUP),
+            KeyboardInput(Win32.VK_CONTROL, ctrlScan, 0),
+            KeyboardInput(Win32.VK_V, vScan, 0),
+            KeyboardInput(Win32.VK_V, vScan, Win32.KEYEVENTF_KEYUP),
+            KeyboardInput(Win32.VK_CONTROL, ctrlScan, Win32.KEYEVENTF_KEYUP),
         };
         return Win32.SendInput((uint)inputs.Length, inputs, Marshal.SizeOf<Win32.INPUT>()) == inputs.Length;
     }

@@ -52,6 +52,8 @@ public sealed partial class FlowBarWindow : Window
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var preference = DwmWindowCornerPreferenceRound;
         DwmSetWindowAttribute(hwnd, DwmwaWindowCornerPreference, ref preference, sizeof(int));
+        var noBorder = DwmColorNone; // no Windows 11 window outline: the bar has no edge at all
+        DwmSetWindowAttribute(hwnd, DwmwaBorderColor, ref noBorder, sizeof(int));
 
         var work = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
         AppWindow.Move(new PointInt32(
@@ -116,6 +118,8 @@ public sealed partial class FlowBarWindow : Window
 
     private const int DwmwaWindowCornerPreference = 33;
     private const int DwmWindowCornerPreferenceRound = 2;
+    private const int DwmwaBorderColor = 34;
+    private const int DwmColorNone = unchecked((int)0xFFFFFFFE);
 
     [LibraryImport("dwmapi.dll")]
     private static partial int DwmSetWindowAttribute(nint hwnd, int attribute, ref int value, int size);
