@@ -53,16 +53,27 @@ public sealed partial class SplashWindow : Window
         AppWindow.Show(activateWindow: false);
     }
 
+    /// <summary>
+    /// Kept in a field: a DispatcherQueueTimer only referenced by a local can be garbage
+    /// collected before it fires, which left the splash on screen for good (seen in real use,
+    /// where loading the speech model triggers collections; never in short test runs).
+    /// </summary>
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _closeTimer;
+
     /// <summary>Shows a final message, stops the progress bar and closes after a moment.</summary>
     public void Finish(string status, TimeSpan after)
     {
         StatusText.Text = status;
         LoadingBar.Visibility = Visibility.Collapsed;
-        var timer = DispatcherQueue.CreateTimer();
-        timer.Interval = after;
-        timer.IsRepeating = false;
-        timer.Tick += (_, _) => Close();
-        timer.Start();
+        _closeTimer = DispatcherQueue.CreateTimer();
+        _closeTimer.Interval = after;
+        _closeTimer.IsRepeating = false;
+        _closeTimer.Tick += (_, _) =>
+        {
+            _closeTimer?.Stop();
+            Close();
+        };
+        _closeTimer.Start();
     }
 
     [LibraryImport("dwmapi.dll")]

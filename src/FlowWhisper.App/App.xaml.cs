@@ -26,6 +26,10 @@ public partial class App : Application
 {
     private MainWindow? _mainWindow;
     private SplashWindow? _splash;
+
+    /// <summary>The splash while its closing message shows; held so it (and its timer) can't be collected first.</summary>
+    private SplashWindow? _closingSplash;
+    private Microsoft.UI.Dispatching.DispatcherQueueTimer? _splashTimeout;
     private static readonly TimeSpan SplashMaxTime = TimeSpan.FromSeconds(10);
     private TaskbarIcon? _trayIcon;
     private FlowBarWindow? _flowBar;
@@ -163,17 +167,20 @@ public partial class App : Application
 
             // A first load on a new device compiles the model for minutes; don't keep the
             // splash up that long. The FlowBar explains if the user dictates before it's done.
-            var timeout = uiDispatcher.CreateTimer();
-            timeout.Interval = SplashMaxTime;
-            timeout.IsRepeating = false;
-            timeout.Tick += (_, _) =>
+            // In a field: a timer only referenced by a local can be garbage collected before it fires.
+            _splashTimeout = uiDispatcher.CreateTimer();
+            _splashTimeout.Interval = SplashMaxTime;
+            _splashTimeout.IsRepeating = false;
+            _splashTimeout.Tick += (_, _) =>
             {
+                _splashTimeout?.Stop();
                 if (Interlocked.Exchange(ref _splash, null) is { } splash)
                 {
+                    KeepUntilClosed(splash);
                     splash.Finish(Strings.SplashStillLoading, TimeSpan.FromSeconds(3));
                 }
             };
-            timeout.Start();
+            _splashTimeout.Start();
         }
         else
         {
@@ -218,6 +225,12 @@ public partial class App : Application
         }
     }
 
+    private void KeepUntilClosed(SplashWindow splash)
+    {
+        _closingSplash = splash;
+        splash.Closed += (_, _) => _closingSplash = null;
+    }
+
     private void FinishSplash(bool loaded)
     {
         if (Interlocked.Exchange(ref _splash, null) is not { } splash)
@@ -225,8 +238,10 @@ public partial class App : Application
             return;
         }
 
+        _splashTimeout?.Stop();
         if (loaded)
         {
+            KeepUntilClosed(splash);
             splash.Finish(Strings.SplashReady(Strings.KeyName(_settings.PushToTalkHotkey)), TimeSpan.FromSeconds(1.8));
         }
         else
