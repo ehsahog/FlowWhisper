@@ -1,4 +1,3 @@
-using FlowWhisper.Core.Injection;
 using FlowWhisper.Core.Native;
 
 namespace FlowWhisper.Core.Hotkey;
@@ -22,13 +21,11 @@ public sealed class HotkeyService : IHotkeyService
 
     // Remote-desktop clients (Omnissa Horizon) install their own low-level hook when their
     // window gets focus and swallow keys, so the dictation key never reached this hook. Hooks
-    // run newest first, so this one re-installs itself after every focus change, and keeps
-    // doing so while a remote client has focus in case the client re-hooks.
+    // run newest first, so this one re-installs itself shortly after every focus change.
+    // (Re-hooking every few seconds while Horizon had focus made Horizon hang, so it doesn't.)
     private static readonly TimeSpan[] RehookDelaysAfterFocusChange = [TimeSpan.FromMilliseconds(300), TimeSpan.FromMilliseconds(1500)];
-    private static readonly TimeSpan RemoteRehookInterval = TimeSpan.FromSeconds(3);
     private Win32.WinEventProc? _foregroundProc;
     private nint _foregroundHook;
-    private Timer? _remoteRehook;
 
     public event Action? PushToTalkStarted;
     public event Action? PushToTalkStopped;
@@ -60,17 +57,6 @@ public sealed class HotkeyService : IHotkeyService
         foreach (var delay in RehookDelaysAfterFocusChange)
         {
             _ = Task.Delay(delay).ContinueWith(_ => _uiContext?.Post(_ => MoveHookToFront(), null), TaskScheduler.Default);
-        }
-
-        var remote = RemoteDesktopClients.IsForegroundRemote();
-        if (remote && _remoteRehook is null)
-        {
-            _remoteRehook = new Timer(_ => _uiContext?.Post(_ => MoveHookToFront(), null), null, RemoteRehookInterval, RemoteRehookInterval);
-        }
-        else if (!remote)
-        {
-            _remoteRehook?.Dispose();
-            _remoteRehook = null;
         }
     }
 
@@ -193,8 +179,6 @@ public sealed class HotkeyService : IHotkeyService
     {
         _watchdog?.Dispose();
         _watchdog = null;
-        _remoteRehook?.Dispose();
-        _remoteRehook = null;
         if (_foregroundHook != 0)
         {
             Win32.UnhookWinEvent(_foregroundHook);

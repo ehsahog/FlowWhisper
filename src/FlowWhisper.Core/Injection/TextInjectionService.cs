@@ -22,33 +22,36 @@ public sealed class TextInjectionService(nint clipboardOwner) : ITextInjectionSe
     private static readonly TimeSpan TypingCharDelay = TimeSpan.FromMilliseconds(8);
 
     /// <summary>
-    /// Remote-desktop clients copy the local clipboard to the remote machine asynchronously
-    /// when it changes; Ctrl+V sent before that lands pastes whatever was there before.
+    /// Returned when a remote-desktop client has focus: the text is on the clipboard and
+    /// the user pastes it. Omnissa Horizon ignores synthesized keystrokes (its keylogger
+    /// protection), so an injected Ctrl+V never reaches the remote machine, while the user's
+    /// own Ctrl+V does, and clipboard redirection carries the text over.
     /// </summary>
-    private static readonly TimeSpan RemoteSyncDelay = TimeSpan.FromMilliseconds(400);
+    public const string RemoteManualPaste = "RemoteManual";
 
-    /// <summary>The remote side reads its own copy late too, so restore well after the paste.</summary>
-    private static readonly TimeSpan RemoteRestoreDelay = TimeSpan.FromSeconds(3);
-
-    public async Task<string> InjectTextAsync(string text)
+    public Task<string> InjectTextAsync(string text)
     {
         if (string.IsNullOrEmpty(text))
         {
-            return "Clipboard";
+            return Task.FromResult("Clipboard");
         }
 
         var remote = RemoteDesktopClients.IsForegroundRemote();
+        if (remote)
+        {
+            // Not private (redirection is a clipboard monitor) and not restored afterwards:
+            // the text must stay until the user has pasted it.
+            return Task.FromResult(Clipboard.SetText(clipboardOwner, text, @private: false) is null
+                ? throw new InvalidOperationException("The clipboard couldn't be opened.")
+                : RemoteManualPaste);
+        }
+
         var snapshot = Clipboard.TakeSnapshot(clipboardOwner);
-        var sequence = Clipboard.SetText(clipboardOwner, text, @private: !remote);
+        var sequence = Clipboard.SetText(clipboardOwner, text);
         if (sequence is null)
         {
             TypePaced(text);
-            return "Typed";
-        }
-
-        if (remote)
-        {
-            await Task.Delay(RemoteSyncDelay);
+            return Task.FromResult("Typed");
         }
 
         if (!SendCtrlV())
@@ -60,14 +63,14 @@ public sealed class TextInjectionService(nint clipboardOwner) : ITextInjectionSe
 
         if (snapshot is not null)
         {
-            ScheduleRestore(snapshot, sequence.Value, remote ? RemoteRestoreDelay : RestoreDelay);
+            ScheduleRestore(snapshot, sequence.Value, RestoreDelay);
         }
         else
         {
             System.Diagnostics.Trace.WriteLine("Clipboard snapshot unavailable; nothing to restore.");
         }
 
-        return remote ? "Remote" : "Clipboard";
+        return Task.FromResult("Clipboard");
     }
 
     private void ScheduleRestore(Clipboard.Snapshot snapshot, uint sequence, TimeSpan delay)

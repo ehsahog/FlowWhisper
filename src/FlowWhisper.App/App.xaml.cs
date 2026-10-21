@@ -515,6 +515,10 @@ public partial class App : Application
                     try
                     {
                         method = await _textInjectionService!.InjectTextAsync(finalText);
+                        if (method == TextInjectionService.RemoteManualPaste)
+                        {
+                            ShowNotice(Strings.ReadyToPaste, Strings.PasteInRemote, TimeSpan.FromSeconds(5));
+                        }
                     }
                     catch (InvalidOperationException)
                     {
@@ -601,6 +605,17 @@ public partial class App : Application
         }
     }
 
+    /// <summary>Brings the bar back with an informational message (not an error, so not logged).</summary>
+    private void ShowNotice(string status, string message, TimeSpan duration)
+    {
+        Interlocked.Increment(ref _barSession);
+        _flowBar!.SetStatus(status);
+        _flowBar.SetTranscript(message);
+        _flowBar.ResetWaveform();
+        _flowBar.ShowBar();
+        HideFlowBarAfterDelay(duration);
+    }
+
     private void ShowTransientError(string message)
     {
         // The status line is one short line; the transcript row wraps, so the message goes there.
@@ -633,10 +648,10 @@ public partial class App : Application
     /// Hides the bar after the final text has been readable for a moment —
     /// unless a new dictation has started since, which owns the bar now.
     /// </summary>
-    private void HideFlowBarAfterDelay()
+    private void HideFlowBarAfterDelay(TimeSpan? after = null)
     {
         var session = Volatile.Read(ref _barSession);
-        _ = System.Threading.Tasks.Task.Delay(2500).ContinueWith(_ => _uiDispatcher!.TryEnqueue(() =>
+        _ = System.Threading.Tasks.Task.Delay(after ?? TimeSpan.FromMilliseconds(2500)).ContinueWith(_ => _uiDispatcher!.TryEnqueue(() =>
         {
             if (Volatile.Read(ref _barSession) == session)
             {

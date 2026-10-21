@@ -90,6 +90,8 @@ public sealed class UiStrings
     public required string WhisperMissing { get; init; }
     public required Func<string, string> TranscriptionFailed { get; init; }
     public required string PasteBlocked { get; init; }
+    public required string ReadyToPaste { get; init; }
+    public required string PasteInRemote { get; init; }
 
     /// <summary>Display name of a hotkey as stored in settings, e.g. "RightCtrl".</summary>
     public string KeyName(string hotkey) => hotkey switch
@@ -188,6 +190,8 @@ public sealed class UiStrings
         WhisperMissing = "Taligenkänning saknas – ladda ner den via FlowWhisper i systemfältet.",
         TranscriptionFailed = error => $"Transkribering misslyckades: {error}",
         PasteBlocked = "Kunde inte klistra in – programmet körs troligen som administratör. Texten ligger i urklipp, tryck Ctrl+V.",
+        ReadyToPaste = "Klar att klistra in",
+        PasteInRemote = "Texten ligger i urklippet – tryck Ctrl+V. Fjärrskrivbordet tar inte emot automatisk inklistring.",
     };
 
     public static readonly UiStrings English = new()
@@ -264,5 +268,7 @@ public sealed class UiStrings
         WhisperMissing = "Speech recognition is missing – download it from FlowWhisper in the system tray.",
         TranscriptionFailed = error => $"Transcription failed: {error}",
         PasteBlocked = "Couldn't paste – the app is probably running as administrator. The text is on the clipboard, press Ctrl+V.",
+        ReadyToPaste = "Ready to paste",
+        PasteInRemote = "The text is on the clipboard – press Ctrl+V. The remote desktop doesn't accept automatic pasting.",
     };
 }
