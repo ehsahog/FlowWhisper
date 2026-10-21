@@ -13,9 +13,11 @@ public static class CorrectionStatus
 }
 
 /// <summary>
-/// Runs the configured <see cref="CorrectionMode"/>. The model is only a helper: whenever it's
-/// missing, slow, failing or rejected by <see cref="CorrectionGuard"/>, the rules' result
-/// (or the dictation as said) is used, so dictation is never blocked by this step.
+/// Runs the configured <see cref="CorrectionMode"/>. Each mode uses only its own method, so
+/// a test of one mode never shows another's result: "AI" never falls back to the rules, and
+/// "rules + AI" only asks the model when the rules changed nothing. Whenever the model is
+/// missing, slow, failing or rejected by <see cref="CorrectionGuard"/>, the dictation is used
+/// exactly as said, so dictation is never blocked by this step.
 /// </summary>
 public static class SelfCorrector
 {
@@ -31,37 +33,40 @@ public static class SelfCorrector
             return (text, CorrectionStatus.None);
         }
 
-        var byRules = SelfCorrectionRules.Apply(text);
-        var rulesStatus = byRules != text ? CorrectionStatus.Rules : CorrectionStatus.None;
-
         switch (mode)
         {
             case CorrectionMode.Rules:
-                return (byRules, rulesStatus);
+                return ByRules(text);
 
             case CorrectionMode.Hybrid:
                 // The rules handled it, or nothing sounds like a correction: no model needed.
-                if (rulesStatus == CorrectionStatus.Rules || !SelfCorrectionRules.HasCue(text))
+                var byRules = ByRules(text);
+                if (byRules.Status == CorrectionStatus.Rules || !SelfCorrectionRules.HasCue(text))
                 {
-                    return (byRules, rulesStatus);
+                    return byRules;
                 }
 
-                return await AskModelAsync(text, model, (byRules, rulesStatus), timeout);
+                return await AskModelAsync(text, model, timeout);
 
             case CorrectionMode.Ai:
-                return await AskModelAsync(text, model, (byRules, rulesStatus), timeout);
+                return await AskModelAsync(text, model, timeout);
 
             default:
                 return (text, CorrectionStatus.None);
         }
     }
 
-    private static async Task<(string Text, string Status)> AskModelAsync(
-        string text, ModelCorrection? model, (string Text, string Status) fallback, TimeSpan? timeout)
+    private static (string Text, string Status) ByRules(string text)
+    {
+        var corrected = SelfCorrectionRules.Apply(text);
+        return corrected != text ? (corrected, CorrectionStatus.Rules) : (text, CorrectionStatus.None);
+    }
+
+    private static async Task<(string Text, string Status)> AskModelAsync(string text, ModelCorrection? model, TimeSpan? timeout)
     {
         if (model is null)
         {
-            return (fallback.Text, fallback.Status == CorrectionStatus.None ? CorrectionStatus.AiNotReady : fallback.Status);
+            return (text, CorrectionStatus.AiNotReady);
         }
 
         try
@@ -70,21 +75,20 @@ public static class SelfCorrector
             var (corrected, accepted, _) = await model(text, cts.Token);
             if (!accepted)
             {
-                return (fallback.Text, CorrectionStatus.AiRejected);
+                return (text, CorrectionStatus.AiRejected);
             }
 
-            return SameWords(corrected, text) ? (fallback.Text, fallback.Status) : (corrected, CorrectionStatus.Ai);
+            return SameWords(corrected, text) ? (text, CorrectionStatus.None) : (corrected, CorrectionStatus.Ai);
         }
         catch (OperationCanceledException)
         {
-            return (fallback.Text, CorrectionStatus.AiTimeout);
+            return (text, CorrectionStatus.AiTimeout);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            return (fallback.Text, CorrectionStatus.AiError);
+            return (text, CorrectionStatus.AiError);
         }
     }
-
     /// <summary>
     /// The model only re-punctuated (nothing was taken back): keep the dictation as transcribed,
     /// since Whisper's punctuation is better than the small model's.

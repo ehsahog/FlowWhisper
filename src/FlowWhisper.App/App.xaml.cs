@@ -560,7 +560,8 @@ public partial class App : Application
                         Text = finalText,
                         InjectionMethod = method,
                         Cleanup = cleanupStatus,
-                        Correction = correctionStatus,
+                        // Mode and outcome, e.g. "ai/none": history shows which method ran even when nothing changed.
+                        Correction = _settings.CorrectionMode == CorrectionMode.Off ? CorrectionStatus.None : $"{_settings.CorrectionMode}/{correctionStatus}",
                     });
                 });
             }

@@ -58,9 +58,19 @@ public class SelfCorrectorTests
     }
 
     [Fact]
-    public async Task MissingSlowOrFailingModelFallsBackToRules()
+    public async Task AiModeNeverUsesTheRules()
     {
-        Assert.Equal(("Vi ses kl 13.", CorrectionStatus.Rules), await SelfCorrector.ApplyAsync(TimeCorrection, CorrectionMode.Ai, null));
+        // The rules would turn this into "Vi ses kl 13.", but AI mode must show only the model's work.
+        Assert.Equal((TimeCorrection, CorrectionStatus.AiRejected),
+            await SelfCorrector.ApplyAsync(TimeCorrection, CorrectionMode.Ai, Model("Vi ses kl 12.", accepted: false)));
+        Assert.Equal((TimeCorrection, CorrectionStatus.AiNotReady), await SelfCorrector.ApplyAsync(TimeCorrection, CorrectionMode.Ai, null));
+        Assert.Equal((TimeCorrection, CorrectionStatus.None),
+            await SelfCorrector.ApplyAsync(TimeCorrection, CorrectionMode.Ai, Model("vi ses kl 12 nej förresten kl 13")));
+    }
+
+    [Fact]
+    public async Task MissingSlowOrFailingModelKeepsTheDictation()
+    {
         Assert.Equal((LooseCorrection, CorrectionStatus.AiNotReady), await SelfCorrector.ApplyAsync(LooseCorrection, CorrectionMode.Hybrid, null));
 
         SelfCorrector.ModelCorrection slow = async (t, ct) => { await Task.Delay(5000, ct); return (t, true, t); };

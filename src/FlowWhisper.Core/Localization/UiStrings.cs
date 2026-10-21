@@ -75,6 +75,9 @@ public sealed class UiStrings
     public required string CorrectionByAi { get; init; }
     public required string CorrectionRejected { get; init; }
     public required string CorrectionSkipped { get; init; }
+    public required string CorrectionNoChange { get; init; }
+    public required string CorrectionAiNotReady { get; init; }
+    public required string CorrectionAiTimeout { get; init; }
     public required string StartAtLogin { get; init; }
     public required string Save { get; init; }
     public required string Saved { get; init; }
@@ -104,16 +107,37 @@ public sealed class UiStrings
     public required string ReadyToPaste { get; init; }
     public required string PasteInRemote { get; init; }
 
-    /// <summary>Translates a stored correction status code for history, or null when nothing happened.</summary>
-    public string? DescribeCorrection(string status) => status switch
+    /// <summary>
+    /// History text for a stored correction, e.g. "rättelse (AI på allt): ingen ändring". Stored as
+    /// "mode/status" so the method that ran is always visible; null when corrections were off.
+    /// </summary>
+    public string? DescribeCorrection(string stored)
     {
-        Corrections.CorrectionStatus.Rules => CorrectionByRules,
-        Corrections.CorrectionStatus.Ai => CorrectionByAi,
-        Corrections.CorrectionStatus.AiRejected => CorrectionRejected,
-        Corrections.CorrectionStatus.AiNotReady or Corrections.CorrectionStatus.AiTimeout or Corrections.CorrectionStatus.AiError => CorrectionSkipped,
-        _ => null,
-    };
+        var parts = stored.Split('/', 2);
+        if (parts.Length != 2)
+        {
+            return null; // off, or an entry from before modes were recorded
+        }
 
+        var mode = parts[0] switch
+        {
+            Corrections.CorrectionMode.Rules => CorrectionRules,
+            Corrections.CorrectionMode.Hybrid => CorrectionHybrid,
+            Corrections.CorrectionMode.Ai => CorrectionAi,
+            var other => other,
+        };
+        var outcome = parts[1] switch
+        {
+            Corrections.CorrectionStatus.Rules => CorrectionByRules,
+            Corrections.CorrectionStatus.Ai => CorrectionByAi,
+            Corrections.CorrectionStatus.AiRejected => CorrectionRejected,
+            Corrections.CorrectionStatus.AiNotReady => CorrectionAiNotReady,
+            Corrections.CorrectionStatus.AiTimeout => CorrectionAiTimeout,
+            Corrections.CorrectionStatus.AiError => CorrectionSkipped,
+            _ => CorrectionNoChange,
+        };
+        return $"{CorrectionHistoryLabel} ({mode}): {outcome}";
+    }
     /// <summary>Display name of a hotkey as stored in settings, e.g. "RightCtrl".</summary>
     public string KeyName(string hotkey) => hotkey switch
     {
@@ -196,10 +220,13 @@ public sealed class UiStrings
         CorrectionHybrid = "Regler + AI vid behov",
         CorrectionHelp = "Experimentellt. Säg till exempel \"kl 12, nej förresten kl 13\" så skrivs bara \"kl 13\". Regler klarar tider, tal, veckodagar och enstaka ord. AI-lägena använder Phi-3.5-modellen och godtar bara svar där den tog bort det du tog tillbaka.",
         CorrectionHistoryLabel = "rättelse",
-        CorrectionByRules = "regler",
-        CorrectionByAi = "AI",
+        CorrectionByRules = "ändrad av regler",
+        CorrectionByAi = "ändrad av AI",
         CorrectionRejected = "AI-svar avvisat",
-        CorrectionSkipped = "AI hoppades över",
+        CorrectionSkipped = "AI-fel",
+        CorrectionNoChange = "ingen ändring",
+        CorrectionAiNotReady = "AI-modellen inte laddad",
+        CorrectionAiTimeout = "AI för långsam",
         StartAtLogin = "Starta vid inloggning",
         Save = "Spara",
         Saved = "Sparat.",
@@ -285,10 +312,13 @@ public sealed class UiStrings
         CorrectionHybrid = "Rules + AI when needed",
         CorrectionHelp = "Experimental. Say for example \"at 12, no wait, at 1\" and only \"at 1\" is typed. Rules handle times, numbers, weekdays and single words. The AI modes use the Phi-3.5 model and only accept answers where it removed what you took back.",
         CorrectionHistoryLabel = "correction",
-        CorrectionByRules = "rules",
-        CorrectionByAi = "AI",
+        CorrectionByRules = "changed by rules",
+        CorrectionByAi = "changed by AI",
         CorrectionRejected = "AI answer rejected",
-        CorrectionSkipped = "AI skipped",
+        CorrectionSkipped = "AI error",
+        CorrectionNoChange = "no change",
+        CorrectionAiNotReady = "AI model not loaded",
+        CorrectionAiTimeout = "AI too slow",
         StartAtLogin = "Start when I sign in",
         Save = "Save",
         Saved = "Saved.",

@@ -329,7 +329,7 @@ public sealed partial class MainPage : Page
         HistoryListView.ItemsSource = _history.Select(e => new HistoryDisplayItem(
             e.Text,
             $"{e.TimestampUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {e.InjectionMethod} · {S.CleanupLabel}: {S.DescribeCleanup(e.Cleanup)}"
-            + (S.DescribeCorrection(e.Correction) is { } correction ? $" · {S.CorrectionHistoryLabel}: {correction}" : ""))).ToList();
+            + (S.DescribeCorrection(e.Correction) is { } correction ? $" · {correction}" : ""))).ToList();
 
     private async void OnSaveButtonClick(object sender, RoutedEventArgs e)
     {
