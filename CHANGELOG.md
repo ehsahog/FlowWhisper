@@ -4,6 +4,24 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.9] - 2026-10-21
+
+### Changed
+
+- The dictation bar is flat frosted glass with no edge at all: no sheen, highlight streak,
+  rim, hairline or Windows window outline.
+- In remote desktops (Omnissa Horizon, Citrix, Microsoft Remote Desktop) the dictation
+  is put on the clipboard and the bar asks you to press Ctrl+V. Horizon ignores keystrokes
+  synthesized by other programs, so an automatic paste never arrived. The text stays on
+  the clipboard until you paste it.
+
+### Fixed
+
+- The dictation key wasn't noticed while a Horizon window had focus: Horizon's own
+  keyboard hook swallowed it. FlowWhisper now puts its hook first again after every focus
+  change.
+- Ctrl+V is sent with hardware scan codes, which remote-desktop clients need.
+
 ## [0.1.5] - 2026-10-21
 
 ### Changed
@@ -90,6 +108,7 @@ First public release.
 - Detection of silent microphones and filtering of Whisper hallucinations.
 - Per-user installer (Velopack) and a portable zip.
 
+[0.1.9]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.5...v0.1.9
 [0.1.5]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.2...v0.1.3

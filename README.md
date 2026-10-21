@@ -53,19 +53,22 @@ kept, so you can delete that folder too if you want everything gone.
 
 ## Remote desktops (VDI)
 
-FlowWhisper also works with Omnissa (VMware) Horizon, Citrix and Microsoft Remote Desktop.
-Click into the remote session, hold the dictation key, speak, and release. The text is
-transcribed on your own PC and pasted into the remote session through its clipboard.
+FlowWhisper works with Omnissa (VMware) Horizon, Citrix and Microsoft Remote Desktop, with
+one extra keystroke. Click into the remote session, hold the dictation key, speak, and
+release. The text is transcribed on your own PC and put on the clipboard, and the bar says
+**press Ctrl+V**. The client then copies the text to the remote machine.
 
+- **Why not paste automatically?** Horizon ignores keystrokes synthesized by other programs
+  (protection against keyloggers), so an automatic Ctrl+V never arrives. Your own Ctrl+V does.
 - **Clipboard redirection must be allowed from client to remote.** In Horizon this is a
-  policy set by your administrator ("Configure clipboard redirection"). If it's blocked, the
-  paste arrives empty or with old clipboard content.
-- FlowWhisper waits briefly before pasting so the client can copy the text to the remote
-  side, and it restores your clipboard only after a few seconds.
-- Remote clients grab the keyboard, which used to make FlowWhisper miss the key release
-  and keep recording. It now re-registers its keyboard hook ahead of the client's and stops
-  on its own if the key stops repeating, or after 3 minutes at the latest.
-
+  policy set by your administrator ("Configure clipboard redirection"). Test it by copying
+  something locally and pasting it in the remote session.
+- In this mode the dictation stays on the clipboard, because it has to be there until you
+  paste. Your previous clipboard content is not restored.
+- Remote clients grab the keyboard with their own hook. FlowWhisper puts its hook first
+  again after every focus change, so the dictation key is seen inside the remote window.
+  If a key release still gets lost, recording stops by itself once the key stops repeating,
+  or after 3 minutes at the latest.
 ## Shift as the dictation key
 
 Windows reacts to Shift by itself: holding Right Shift for 8 seconds offers **Filter Keys**,
