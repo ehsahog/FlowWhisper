@@ -1,5 +1,6 @@
-using FlowWhisper.Core.Assets;
+﻿using FlowWhisper.Core.Assets;
 using FlowWhisper.Core.Audio;
+using FlowWhisper.Core.Corrections;
 using FlowWhisper.Core.History;
 using FlowWhisper.Core.Hotkey;
 using FlowWhisper.Core.Localization;
@@ -75,6 +76,8 @@ public sealed partial class MainPage : Page
         CleanupDeviceLabel.Text = S.CleanupDeviceLabel;
         CleanupHelpText.Text = S.CleanupHelp;
         GlassTransparencyLabel.Text = S.GlassTransparencyLabel;
+        CorrectionLabel.Text = S.CorrectionLabel;
+        CorrectionHelpText.Text = S.CorrectionHelp;
         LivePreviewToggle.Header = S.LivePreview;
         CleanupToggle.Header = S.CleanupToggle;
         StartAtLoginToggle.Header = S.StartAtLogin;
@@ -114,6 +117,12 @@ public sealed partial class MainPage : Page
             ("NPU", S.WhisperDeviceNpu),
             ("CPU", S.WhisperDeviceCpu));
 
+        SetItems(CorrectionComboBox,
+            (CorrectionMode.Off, S.CorrectionOff),
+            (CorrectionMode.Rules, S.CorrectionRules),
+            (CorrectionMode.Hybrid, S.CorrectionHybrid),
+            (CorrectionMode.Ai, S.CorrectionAi));
+
         SetItems(CleanupDeviceComboBox,
             ("GPU", S.CleanupDeviceGpu),
             ("NPU", S.CleanupDeviceNpu));
@@ -152,7 +161,9 @@ public sealed partial class MainPage : Page
         WhisperSetupCard.Visibility = whisperMissing || _whisperDownload is not null ? Visibility.Visible : Visibility.Collapsed;
         WhisperSetupText.Text = S.WhisperSetupBody(model, FormatMegabytes(Installer.WhisperDownloadSize(model)));
 
-        var cleanupMissing = _settings.CleanupEnabled && !Installer.IsCleanupInstalled();
+        // The Phi-3.5 model serves both AI cleanup and the AI correction modes.
+        var modelWanted = _settings.CleanupEnabled || CorrectionMode.UsesModel(_settings.CorrectionMode);
+        var cleanupMissing = modelWanted && !Installer.IsCleanupInstalled();
         CleanupSetupCard.Visibility = cleanupMissing || _cleanupDownload is not null ? Visibility.Visible : Visibility.Collapsed;
         CleanupSetupText.Text = S.CleanupSetupBody(FormatMegabytes(Installer.CleanupDownloadSize));
     }
@@ -266,6 +277,7 @@ public sealed partial class MainPage : Page
         _settingControls = true;
         GlassTransparencySlider.Value = _settings.GlassTransparency;
         _settingControls = false;
+        SelectComboBoxByTag(CorrectionComboBox, _settings.CorrectionMode);
         CleanupToggle.IsOn = _settings.CleanupEnabled;
         SelectComboBoxByTag(CleanupDeviceComboBox, _settings.CleanupDevice);
         StartAtLoginToggle.IsOn = _settings.StartAtLogin;
@@ -316,7 +328,8 @@ public sealed partial class MainPage : Page
     private void ShowHistory() =>
         HistoryListView.ItemsSource = _history.Select(e => new HistoryDisplayItem(
             e.Text,
-            $"{e.TimestampUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {e.InjectionMethod} · {S.CleanupLabel}: {S.DescribeCleanup(e.Cleanup)}")).ToList();
+            $"{e.TimestampUtc.ToLocalTime():yyyy-MM-dd HH:mm} · {e.InjectionMethod} · {S.CleanupLabel}: {S.DescribeCleanup(e.Cleanup)}"
+            + (S.DescribeCorrection(e.Correction) is { } correction ? $" · {S.CorrectionHistoryLabel}: {correction}" : ""))).ToList();
 
     private async void OnSaveButtonClick(object sender, RoutedEventArgs e)
     {
@@ -331,6 +344,7 @@ public sealed partial class MainPage : Page
         _settings.LivePreviewEnabled = LivePreviewToggle.IsOn;
         _settings.GlassTransparency = (int)GlassTransparencySlider.Value;
         _settings.CleanupEnabled = CleanupToggle.IsOn;
+        _settings.CorrectionMode = SelectedTag(CorrectionComboBox);
         _settings.CleanupDevice = SelectedTag(CleanupDeviceComboBox);
         _settings.StartAtLogin = StartAtLoginToggle.IsOn;
         _settings.PreferredMicrophoneId = ((AudioDeviceInfo)MicComboBox.SelectedItem).Id;

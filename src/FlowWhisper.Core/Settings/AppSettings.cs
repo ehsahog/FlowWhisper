@@ -42,6 +42,12 @@ public sealed class AppSettings
     /// </summary>
     public bool CleanupEnabled { get; set; } = false;
 
+    /// <summary>
+    /// How spoken self-corrections are handled: one of the <see cref="Corrections.CorrectionMode"/>
+    /// values. Experimental, so off by default.
+    /// </summary>
+    public string CorrectionMode { get; set; } = Corrections.CorrectionMode.Off;
+
     /// <summary>"GPU" (fastest in benchmarks) or "NPU" (lower power).</summary>
     public string CleanupDevice { get; set; } = "GPU";
 

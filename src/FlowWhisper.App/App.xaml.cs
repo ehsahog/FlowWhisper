@@ -4,6 +4,7 @@ using FlowWhisper.Core.Assets;
 using FlowWhisper.Core.Localization;
 using FlowWhisper.Core.Audio;
 using FlowWhisper.Core.Cleanup;
+using FlowWhisper.Core.Corrections;
 using FlowWhisper.Core.History;
 using FlowWhisper.Core.Hotkey;
 using FlowWhisper.Core.Injection;
@@ -183,7 +184,7 @@ public partial class App : Application
             _mainWindow.Activate();
         }
 
-        if (_settings.CleanupEnabled)
+        if (NeedsLanguageModel(_settings))
         {
             LoadCleanupServiceInBackground(_settings.CleanupDevice);
         }
@@ -211,7 +212,7 @@ public partial class App : Application
             ReloadTranscriptionService();
         }
 
-        if (_settings.CleanupEnabled && _cleanupService is null)
+        if (NeedsLanguageModel(_settings) && _cleanupService is null)
         {
             LoadCleanupServiceInBackground(_settings.CleanupDevice);
         }
@@ -311,7 +312,7 @@ public partial class App : Application
             _audioCaptureService.PreferredDeviceId = updated.PreferredMicrophoneId;
         }
 
-        if (!updated.CleanupEnabled)
+        if (!NeedsLanguageModel(updated))
         {
             // Frees the ~2 GB model from GPU/NPU memory when the toggle is off.
             ReplaceCleanupService(null);
@@ -321,6 +322,10 @@ public partial class App : Application
             LoadCleanupServiceInBackground(updated.CleanupDevice);
         }
     }
+
+    /// <summary>The local language model (Phi-3.5) serves both AI cleanup and AI self-corrections.</summary>
+    private static bool NeedsLanguageModel(AppSettings settings) =>
+        settings.CleanupEnabled || CorrectionMode.UsesModel(settings.CorrectionMode);
 
     private void LoadCleanupServiceInBackground(string device)
     {
@@ -344,7 +349,7 @@ public partial class App : Application
                     CleanupModelLocator.GetCacheDirectory());
 
                 // The user may have switched device or turned cleanup off while this was loading.
-                if (_settings.CleanupEnabled && _settings.CleanupDevice == device)
+                if (NeedsLanguageModel(_settings) && _settings.CleanupDevice == device)
                 {
                     ReplaceCleanupService(service);
                 }
@@ -505,7 +510,10 @@ public partial class App : Application
                     return;
                 }
 
-                var (finalText, cleanupStatus) = await CleanupOrFallbackAsync(rawText);
+                // Self-corrections first ("kl 12, nej kl 13"), so cleanup sees what was meant.
+                var (correctedText, correctionStatus) = await SelfCorrector.ApplyAsync(
+                    rawText, _settings.CorrectionMode, (_cleanupService as CleanupService) is { } llm ? llm.CorrectAsync : null);
+                var (finalText, cleanupStatus) = await CleanupOrFallbackAsync(correctedText);
 
                 // async void is fine here: everything inside is caught, and the injection's
                 // waits must resume on the UI thread that owns the clipboard window.
@@ -537,6 +545,7 @@ public partial class App : Application
                         Text = finalText,
                         InjectionMethod = method,
                         Cleanup = cleanupStatus,
+                        Correction = correctionStatus,
                     });
                 });
             }

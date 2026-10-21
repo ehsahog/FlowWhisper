@@ -64,6 +64,17 @@ public sealed class UiStrings
     public required string CleanupDeviceGpu { get; init; }
     public required string CleanupDeviceNpu { get; init; }
     public required string CleanupHelp { get; init; }
+    public required string CorrectionLabel { get; init; }
+    public required string CorrectionOff { get; init; }
+    public required string CorrectionRules { get; init; }
+    public required string CorrectionAi { get; init; }
+    public required string CorrectionHybrid { get; init; }
+    public required string CorrectionHelp { get; init; }
+    public required string CorrectionHistoryLabel { get; init; }
+    public required string CorrectionByRules { get; init; }
+    public required string CorrectionByAi { get; init; }
+    public required string CorrectionRejected { get; init; }
+    public required string CorrectionSkipped { get; init; }
     public required string StartAtLogin { get; init; }
     public required string Save { get; init; }
     public required string Saved { get; init; }
@@ -92,6 +103,16 @@ public sealed class UiStrings
     public required string PasteBlocked { get; init; }
     public required string ReadyToPaste { get; init; }
     public required string PasteInRemote { get; init; }
+
+    /// <summary>Translates a stored correction status code for history, or null when nothing happened.</summary>
+    public string? DescribeCorrection(string status) => status switch
+    {
+        Corrections.CorrectionStatus.Rules => CorrectionByRules,
+        Corrections.CorrectionStatus.Ai => CorrectionByAi,
+        Corrections.CorrectionStatus.AiRejected => CorrectionRejected,
+        Corrections.CorrectionStatus.AiNotReady or Corrections.CorrectionStatus.AiTimeout or Corrections.CorrectionStatus.AiError => CorrectionSkipped,
+        _ => null,
+    };
 
     /// <summary>Display name of a hotkey as stored in settings, e.g. "RightCtrl".</summary>
     public string KeyName(string hotkey) => hotkey switch
@@ -130,8 +151,8 @@ public sealed class UiStrings
         WhisperSetupBody = (model, size) =>
             $"Taligenkänningsmodellen \"{model}\" och Intels OpenVINO-runtime ({size}) krävs för att diktera. " +
             "De laddas ner en gång och kontrolleras med SHA-256. Sedan körs allt lokalt, utan internet.",
-        CleanupSetupTitle = "AI-städning behöver laddas ner",
-        CleanupSetupBody = size => $"Experimentell AI-städning behöver Phi-3.5-modellen ({size}). Avbrutna nedladdningar fortsätter där de slutade.",
+        CleanupSetupTitle = "AI-modellen behöver laddas ner",
+        CleanupSetupBody = size => $"AI-städning och AI-rättelser behöver Phi-3.5-modellen ({size}). Den körs lokalt. Avbrutna nedladdningar fortsätter där de slutade.",
         Download = "Ladda ner",
         Cancel = "Avbryt",
         DownloadDone = "Klart.",
@@ -164,10 +185,21 @@ public sealed class UiStrings
         MicrophoneLabel = "Mikrofon",
         MicrophoneSystemDefault = "Systemstandard",
         CleanupToggle = "Städa text med AI (experimentellt, Phi-3.5)",
-        CleanupDeviceLabel = "Kör städning på",
+        CleanupDeviceLabel = "Kör AI-modellen på",
         CleanupDeviceGpu = "GPU (snabbast)",
         CleanupDeviceNpu = "NPU (strömsnål)",
         CleanupHelp = "Svar som lägger till eller tappar ord avvisas automatiskt och då används den oredigerade texten. Historiken visar om städningen användes, avvisades eller tog för lång tid.",
+        CorrectionLabel = "Förstå rättelser",
+        CorrectionOff = "Av",
+        CorrectionRules = "Regler (snabbt)",
+        CorrectionAi = "AI på allt (långsammare)",
+        CorrectionHybrid = "Regler + AI vid behov",
+        CorrectionHelp = "Experimentellt. Säg till exempel \"kl 12, nej förresten kl 13\" så skrivs bara \"kl 13\". Regler klarar tider, tal, veckodagar och enstaka ord. AI-lägena använder Phi-3.5-modellen och godtar bara svar där den tog bort det du tog tillbaka.",
+        CorrectionHistoryLabel = "rättelse",
+        CorrectionByRules = "regler",
+        CorrectionByAi = "AI",
+        CorrectionRejected = "AI-svar avvisat",
+        CorrectionSkipped = "AI hoppades över",
         StartAtLogin = "Starta vid inloggning",
         Save = "Spara",
         Saved = "Sparat.",
@@ -208,8 +240,8 @@ public sealed class UiStrings
         WhisperSetupBody = (model, size) =>
             $"The speech model \"{model}\" and Intel's OpenVINO runtime ({size}) are needed to dictate. " +
             "They are downloaded once and verified with SHA-256. After that everything runs locally, offline.",
-        CleanupSetupTitle = "AI cleanup needs to be downloaded",
-        CleanupSetupBody = size => $"Experimental AI cleanup needs the Phi-3.5 model ({size}). Interrupted downloads resume where they left off.",
+        CleanupSetupTitle = "The AI model needs to be downloaded",
+        CleanupSetupBody = size => $"AI cleanup and AI corrections need the Phi-3.5 model ({size}). It runs locally. Interrupted downloads resume where they left off.",
         Download = "Download",
         Cancel = "Cancel",
         DownloadDone = "Done.",
@@ -242,10 +274,21 @@ public sealed class UiStrings
         MicrophoneLabel = "Microphone",
         MicrophoneSystemDefault = "System default",
         CleanupToggle = "Clean up text with AI (experimental, Phi-3.5)",
-        CleanupDeviceLabel = "Run cleanup on",
+        CleanupDeviceLabel = "Run the AI model on",
         CleanupDeviceGpu = "GPU (fastest)",
         CleanupDeviceNpu = "NPU (low power)",
         CleanupHelp = "Results that add or drop words are rejected automatically and the unedited text is used instead. History shows whether cleanup was used, rejected or took too long.",
+        CorrectionLabel = "Understand corrections",
+        CorrectionOff = "Off",
+        CorrectionRules = "Rules (fast)",
+        CorrectionAi = "AI on everything (slower)",
+        CorrectionHybrid = "Rules + AI when needed",
+        CorrectionHelp = "Experimental. Say for example \"at 12, no wait, at 1\" and only \"at 1\" is typed. Rules handle times, numbers, weekdays and single words. The AI modes use the Phi-3.5 model and only accept answers where it removed what you took back.",
+        CorrectionHistoryLabel = "correction",
+        CorrectionByRules = "rules",
+        CorrectionByAi = "AI",
+        CorrectionRejected = "AI answer rejected",
+        CorrectionSkipped = "AI skipped",
         StartAtLogin = "Start when I sign in",
         Save = "Save",
         Saved = "Saved.",

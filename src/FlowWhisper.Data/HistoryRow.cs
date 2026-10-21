@@ -19,4 +19,6 @@ internal sealed class HistoryRow
 
     // Added after the first schema; sqlite-net's CreateTable adds the missing column on existing databases.
     public string Cleanup { get; set; } = string.Empty;
+
+    public string Correction { get; set; } = string.Empty;
 }

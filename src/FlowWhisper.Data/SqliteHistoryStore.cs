@@ -22,6 +22,7 @@ public sealed class SqliteHistoryStore : IHistoryStore, IDisposable
             Text = entry.Text,
             InjectionMethod = entry.InjectionMethod,
             Cleanup = entry.Cleanup,
+            Correction = entry.Correction,
         });
     }
 
@@ -39,6 +40,7 @@ public sealed class SqliteHistoryStore : IHistoryStore, IDisposable
             Text = r.Text,
             InjectionMethod = r.InjectionMethod,
             Cleanup = string.IsNullOrEmpty(r.Cleanup) ? FlowWhisper.Core.Cleanup.CleanupStatus.Off : r.Cleanup,
+            Correction = string.IsNullOrEmpty(r.Correction) ? FlowWhisper.Core.Corrections.CorrectionStatus.None : r.Correction,
         }).ToList();
     }
 

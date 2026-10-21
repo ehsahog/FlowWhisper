@@ -4,6 +4,24 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] – experimental/backtracking
+
+### Added
+
+- "Understand corrections" (experimental, off by default): say "kl 12, nej förresten kl 13"
+  and only "kl 13" is typed. Four modes:
+  - **Off**.
+  - **Rules:** instant; handles times (also spelled out), numbers, weekdays and single
+    words or names, in Swedish and English.
+  - **Rules + AI when needed:** the local Phi-3.5 model is only asked when a correction
+    phrase was said and no rule fit.
+  - **AI on everything:** the model reads every dictation; slower.
+- The model's answer is only used if it has the exact shape of a correction: one run of
+  words removed, ending with the correction phrase, and nothing else changed. Otherwise the
+  dictation is used as said.
+- History shows whether a correction was made by rules or AI, or whether the AI answer
+  was rejected.
+
 ## [0.1.9] - 2026-10-21
 
 ### Changed

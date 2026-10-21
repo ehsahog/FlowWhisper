@@ -121,6 +121,12 @@
                     <ComboBox x:Name="MicComboBox" Width="280" DisplayMemberPath="Name" />
                 </StackPanel>
 
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="CorrectionLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <ComboBox x:Name="CorrectionComboBox" Width="280" />
+                </StackPanel>
+                <TextBlock x:Name="CorrectionHelpText" Opacity="0.6" FontSize="12" TextWrapping="Wrap" />
+
                 <ToggleSwitch x:Name="CleanupToggle" />
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <TextBlock x:Name="CleanupDeviceLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
