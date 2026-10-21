@@ -12,6 +12,11 @@ public sealed class UiStrings
     public required string TrayOpenSettings { get; init; }
     public required string TrayExit { get; init; }
 
+    // Splash
+    public required string SplashLoading { get; init; }
+    public required Func<string, string> SplashReady { get; init; } // key name
+    public required string SplashStillLoading { get; init; }
+
     // FlowBar
     public required string Listening { get; init; }
     public required string Notice { get; init; }
@@ -40,6 +45,8 @@ public sealed class UiStrings
     public required string KeyRightCtrl { get; init; }
     public required string KeyLeftCtrl { get; init; }
     public required string KeyRightAlt { get; init; }
+    public required string ShiftKeyHint { get; init; }
+    public required string OpenKeyboardSettings { get; init; }
     public required string ModelLabel { get; init; }
     public required string ModelTurbo { get; init; }
     public required string ModelSmall { get; init; }
@@ -48,6 +55,8 @@ public sealed class UiStrings
     public required string WhisperDeviceNpu { get; init; }
     public required string WhisperDeviceCpu { get; init; }
     public required string LivePreview { get; init; }
+    public required string GlassTransparencyLabel { get; init; }
+    public required string GlassPreview { get; init; }
     public required string MicrophoneLabel { get; init; }
     public required string MicrophoneSystemDefault { get; init; }
     public required string CleanupToggle { get; init; }
@@ -82,6 +91,17 @@ public sealed class UiStrings
     public required Func<string, string> TranscriptionFailed { get; init; }
     public required string PasteBlocked { get; init; }
 
+    /// <summary>Display name of a hotkey as stored in settings, e.g. "RightCtrl".</summary>
+    public string KeyName(string hotkey) => hotkey switch
+    {
+        "RightShift" => KeyRightShift,
+        "LeftShift" => KeyLeftShift,
+        "RightCtrl" => KeyRightCtrl,
+        "LeftCtrl" => KeyLeftCtrl,
+        "RightAlt" => KeyRightAlt,
+        _ => hotkey,
+    };
+
     /// <summary>Translates a stored cleanup status code (or a legacy Swedish value) for display.</summary>
     public string DescribeCleanup(string status) => status switch
     {
@@ -99,6 +119,9 @@ public sealed class UiStrings
         Code = "sv",
         TrayOpenSettings = "Inställningar",
         TrayExit = "Avsluta",
+        SplashLoading = "Laddar taligenkänningen…",
+        SplashReady = key => $"Redo – håll {key} och prata.",
+        SplashStillLoading = "Taligenkänningen laddas klart i bakgrunden.",
         Listening = "Lyssnar...",
         Notice = "Obs",
         WhisperSetupTitle = "Taligenkänning behöver laddas ner",
@@ -124,6 +147,8 @@ public sealed class UiStrings
         KeyRightCtrl = "Höger Ctrl",
         KeyLeftCtrl = "Vänster Ctrl",
         KeyRightAlt = "Höger Alt",
+        ShiftKeyHint = "Håller du Shift länge (höger Shift i 8 sekunder) eller trycker den fem gånger frågar Windows om Tangentfilter eller Tröga tangenter. Välj Höger Ctrl i stället, eller stäng av kortkommandona i Windows.",
+        OpenKeyboardSettings = "Öppna Windows tangentbordsinställningar",
         ModelLabel = "Taligenkänningsmodell",
         ModelTurbo = "large-v3-turbo (bäst kvalitet)",
         ModelSmall = "small (snabbast)",
@@ -132,6 +157,8 @@ public sealed class UiStrings
         WhisperDeviceNpu = "NPU (strömsnål, bäst med small)",
         WhisperDeviceCpu = "CPU (långsammast)",
         LivePreview = "Visa text medan jag pratar",
+        GlassTransparencyLabel = "Rutans genomskinlighet",
+        GlassPreview = "Så här genomskinlig blir rutan.",
         MicrophoneLabel = "Mikrofon",
         MicrophoneSystemDefault = "Systemstandard",
         CleanupToggle = "Städa text med AI (experimentellt, Phi-3.5)",
@@ -168,6 +195,9 @@ public sealed class UiStrings
         Code = "en",
         TrayOpenSettings = "Settings",
         TrayExit = "Exit",
+        SplashLoading = "Loading speech recognition…",
+        SplashReady = key => $"Ready – hold {key} and speak.",
+        SplashStillLoading = "Speech recognition is finishing loading in the background.",
         Listening = "Listening...",
         Notice = "Note",
         WhisperSetupTitle = "Speech recognition needs to be downloaded",
@@ -193,6 +223,8 @@ public sealed class UiStrings
         KeyRightCtrl = "Right Ctrl",
         KeyLeftCtrl = "Left Ctrl",
         KeyRightAlt = "Right Alt",
+        ShiftKeyHint = "Holding Shift (Right Shift for 8 seconds) or pressing it five times makes Windows offer Filter Keys or Sticky Keys. Choose Right Ctrl instead, or turn off those shortcuts in Windows.",
+        OpenKeyboardSettings = "Open Windows keyboard settings",
         ModelLabel = "Speech model",
         ModelTurbo = "large-v3-turbo (best quality)",
         ModelSmall = "small (fastest)",
@@ -201,6 +233,8 @@ public sealed class UiStrings
         WhisperDeviceNpu = "NPU (low power, best with small)",
         WhisperDeviceCpu = "CPU (slowest)",
         LivePreview = "Show text while I speak",
+        GlassTransparencyLabel = "Bar transparency",
+        GlassPreview = "This is how see-through the bar will be.",
         MicrophoneLabel = "Microphone",
         MicrophoneSystemDefault = "System default",
         CleanupToggle = "Clean up text with AI (experimental, Phi-3.5)",

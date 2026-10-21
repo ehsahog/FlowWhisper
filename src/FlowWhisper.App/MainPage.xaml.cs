@@ -18,6 +18,9 @@ public sealed partial class MainPage : Page
     private CancellationTokenSource? _cleanupDownload;
     private List<HistoryEntry> _history = [];
 
+    /// <summary>True while controls are filled from settings, so change handlers don't react.</summary>
+    private bool _settingControls;
+
     private static AssetInstaller Installer => App.Services.GetRequiredService<AssetInstaller>();
     private static UiStrings S => App.Strings;
 
@@ -71,6 +74,7 @@ public sealed partial class MainPage : Page
         MicrophoneLabel.Text = S.MicrophoneLabel;
         CleanupDeviceLabel.Text = S.CleanupDeviceLabel;
         CleanupHelpText.Text = S.CleanupHelp;
+        GlassTransparencyLabel.Text = S.GlassTransparencyLabel;
         LivePreviewToggle.Header = S.LivePreview;
         CleanupToggle.Header = S.CleanupToggle;
         StartAtLoginToggle.Header = S.StartAtLogin;
@@ -93,11 +97,13 @@ public sealed partial class MainPage : Page
              .. LanguageResolver.DictationLanguages]);
 
         SetItems(HotkeyComboBox,
-            ("RightShift", S.KeyRightShift),
-            ("LeftShift", S.KeyLeftShift),
             ("RightCtrl", S.KeyRightCtrl),
             ("LeftCtrl", S.KeyLeftCtrl),
+            ("RightShift", S.KeyRightShift),
+            ("LeftShift", S.KeyLeftShift),
             ("RightAlt", S.KeyRightAlt));
+        ShiftHintText.Text = S.ShiftKeyHint;
+        KeyboardSettingsLink.Content = S.OpenKeyboardSettings;
 
         SetItems(ModelComboBox,
             ("turbo", S.ModelTurbo),
@@ -257,6 +263,9 @@ public sealed partial class MainPage : Page
         SelectComboBoxByTag(ModelComboBox, _settings.WhisperModel);
         SelectComboBoxByTag(WhisperDeviceComboBox, _settings.WhisperDevice);
         LivePreviewToggle.IsOn = _settings.LivePreviewEnabled;
+        _settingControls = true;
+        GlassTransparencySlider.Value = _settings.GlassTransparency;
+        _settingControls = false;
         CleanupToggle.IsOn = _settings.CleanupEnabled;
         SelectComboBoxByTag(CleanupDeviceComboBox, _settings.CleanupDevice);
         StartAtLoginToggle.IsOn = _settings.StartAtLogin;
@@ -276,6 +285,24 @@ public sealed partial class MainPage : Page
         // Unknown value (e.g. a hand-edited settings file): fall back to the first option.
         comboBox.SelectedIndex = 0;
     }
+
+    /// <summary>Shows the FlowBar at the new transparency right away, so the slider can be judged live.</summary>
+    private void OnGlassTransparencyChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (!_settingControls)
+        {
+            ((App)Application.Current).PreviewGlass((int)e.NewValue);
+        }
+    }
+
+    private void OnHotkeySelectionChanged(object sender, SelectionChangedEventArgs e) =>
+        ShiftHintPanel.Visibility = (HotkeyComboBox.SelectedItem as ComboBoxItem)?.Tag is string tag && tag.EndsWith("Shift")
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+
+    private async void OnKeyboardSettingsClick(object sender, RoutedEventArgs e) =>
+        // Accessibility > Keyboard holds the Sticky Keys and Filter Keys shortcut switches.
+        await Windows.System.Launcher.LaunchUriAsync(new Uri("ms-settings:easeofaccess-keyboard"));
 
     private static string SelectedTag(ComboBox comboBox) => (string)((ComboBoxItem)comboBox.SelectedItem).Tag;
 
@@ -302,6 +329,7 @@ public sealed partial class MainPage : Page
         _settings.WhisperModel = SelectedTag(ModelComboBox);
         _settings.WhisperDevice = SelectedTag(WhisperDeviceComboBox);
         _settings.LivePreviewEnabled = LivePreviewToggle.IsOn;
+        _settings.GlassTransparency = (int)GlassTransparencySlider.Value;
         _settings.CleanupEnabled = CleanupToggle.IsOn;
         _settings.CleanupDevice = SelectedTag(CleanupDeviceComboBox);
         _settings.StartAtLogin = StartAtLoginToggle.IsOn;

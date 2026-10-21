@@ -82,7 +82,13 @@
 
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <TextBlock x:Name="HotkeyLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
-                    <ComboBox x:Name="HotkeyComboBox" Width="280" />
+                    <ComboBox x:Name="HotkeyComboBox" Width="280" SelectionChanged="OnHotkeySelectionChanged" />
+                </StackPanel>
+
+                <!-- Shown while a Shift key is chosen: Windows' accessibility shortcuts react to it. -->
+                <StackPanel x:Name="ShiftHintPanel" Visibility="Collapsed" Spacing="2">
+                    <TextBlock x:Name="ShiftHintText" Opacity="0.7" FontSize="12" TextWrapping="Wrap" />
+                    <HyperlinkButton x:Name="KeyboardSettingsLink" Padding="0" FontSize="12" Click="OnKeyboardSettingsClick" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="12">
@@ -96,6 +102,19 @@
                 </StackPanel>
 
                 <ToggleSwitch x:Name="LivePreviewToggle" />
+
+                <StackPanel Orientation="Horizontal" Spacing="12">
+                    <TextBlock x:Name="GlassTransparencyLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />
+                    <Slider
+                        x:Name="GlassTransparencySlider"
+                        Width="280"
+                        Minimum="0"
+                        Maximum="100"
+                        StepFrequency="5"
+                        TickFrequency="25"
+                        TickPlacement="Outside"
+                        ValueChanged="OnGlassTransparencyChanged" />
+                </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <TextBlock x:Name="MicrophoneLabel" VerticalAlignment="Center" Width="{StaticResource LabelWidth}" />

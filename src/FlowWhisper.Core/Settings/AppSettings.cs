@@ -2,7 +2,14 @@ namespace FlowWhisper.Core.Settings;
 
 public sealed class AppSettings
 {
-    public string PushToTalkHotkey { get; set; } = "RightShift";
+    /// <summary>
+    /// Right Ctrl by default: holding Right Shift for 8 s makes Windows offer Filter Keys,
+    /// and pressing Shift five times offers Sticky Keys; neither is triggered by Ctrl.
+    /// </summary>
+    public string PushToTalkHotkey { get; set; } = "RightCtrl";
+
+    /// <summary>How see-through the FlowBar and splash glass is, 0–100 %. 0 = the frosted default.</summary>
+    public int GlassTransparency { get; set; }
 
     /// <summary>
     /// "turbo" (large-v3-turbo: best Swedish, 1.4 s on GPU in benchmarks) or

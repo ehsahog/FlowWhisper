@@ -98,6 +98,8 @@ public sealed partial class FlowBarWindow : Window
 
     public void SetStatus(string text) => StatusText.Text = text;
 
+    public void SetTransparency(int percent) => GlassStyle.Apply(this, TintLayers, percent);
+
     /// <summary>Shows the tail of the transcript so the newest words stay visible.</summary>
     public void SetTranscript(string text) =>
         TranscriptText.Text = text.Length <= MaxTranscriptChars ? text : "…" + text[^MaxTranscriptChars..];

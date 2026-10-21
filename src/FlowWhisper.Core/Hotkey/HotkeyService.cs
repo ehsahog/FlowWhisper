@@ -10,10 +10,14 @@ namespace FlowWhisper.Core.Hotkey;
 /// </summary>
 public sealed class HotkeyService : IHotkeyService
 {
+    private static readonly TimeSpan WatchdogInterval = TimeSpan.FromMilliseconds(200);
+
+    private readonly PushToTalkTracker _tracker = new();
     private Win32.LowLevelKeyboardProc? _proc;
     private nint _hookHandle;
     private uint _targetVk;
-    private bool _isDown;
+    private SynchronizationContext? _uiContext;
+    private Timer? _watchdog;
 
     public event Action? PushToTalkStarted;
     public event Action? PushToTalkStopped;
@@ -26,23 +30,54 @@ public sealed class HotkeyService : IHotkeyService
         }
 
         _targetVk = VirtualKeyMap.Resolve(hotkeyName);
+        _uiContext = SynchronizationContext.Current;
 
         // The delegate must be kept alive in a field — otherwise the GC can
         // collect it while native code still holds a pointer to it.
         _proc = HookCallback;
-        _hookHandle = Win32.SetWindowsHookEx(Win32.WH_KEYBOARD_LL, _proc, nint.Zero, 0);
-
-        if (_hookHandle == 0)
-        {
-            throw new InvalidOperationException(
-                $"Failed to install keyboard hook (Win32 error {System.Runtime.InteropServices.Marshal.GetLastWin32Error()}).");
-        }
+        _hookHandle = InstallHook();
     }
 
     public void ChangeKey(string hotkeyName)
     {
         _targetVk = VirtualKeyMap.Resolve(hotkeyName);
-        _isDown = false;
+        _tracker.Reset();
+    }
+
+    private nint InstallHook()
+    {
+        var handle = Win32.SetWindowsHookEx(Win32.WH_KEYBOARD_LL, _proc!, nint.Zero, 0);
+        if (handle == 0)
+        {
+            throw new InvalidOperationException(
+                $"Failed to install keyboard hook (Win32 error {System.Runtime.InteropServices.Marshal.GetLastWin32Error()}).");
+        }
+
+        return handle;
+    }
+
+    /// <summary>
+    /// Low-level hooks run newest first, and remote-desktop clients install theirs when they
+    /// get focus and may swallow keys. Re-installing puts this hook first again, so the
+    /// key-up of the current press is seen before anyone can swallow it.
+    /// </summary>
+    private void MoveHookToFront()
+    {
+        if (_hookHandle == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var fresh = InstallHook();
+            Win32.UnhookWindowsHookEx(Interlocked.Exchange(ref _hookHandle, fresh));
+        }
+        catch (InvalidOperationException ex)
+        {
+            // The old hook is still installed and working; just stay behind the others.
+            System.Diagnostics.Debug.WriteLine($"FlowWhisper hook re-install failed: {ex.Message}");
+        }
     }
 
     private nint HookCallback(int nCode, nint wParam, nint lParam)
@@ -61,15 +96,16 @@ public sealed class HotkeyService : IHotkeyService
                 // failures are swallowed rather than propagated.
                 try
                 {
-                    if (isKeyDown && !_isDown)
+                    if (isKeyDown && _tracker.KeyDown(DateTime.UtcNow))
                     {
-                        _isDown = true;
+                        // Not from inside the callback: unhooking the running hook here is unsafe.
+                        _uiContext?.Post(_ => MoveHookToFront(), null);
+                        StartWatchdog();
                         PushToTalkStarted?.Invoke();
                     }
-                    else if (isKeyUp && _isDown)
+                    else if (isKeyUp && _tracker.KeyUp())
                     {
-                        _isDown = false;
-                        PushToTalkStopped?.Invoke();
+                        Stop();
                     }
                 }
                 catch (Exception ex)
@@ -84,8 +120,43 @@ public sealed class HotkeyService : IHotkeyService
         return Win32.CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 
+    private void StartWatchdog()
+    {
+        _watchdog?.Dispose();
+        _watchdog = new Timer(_ => _uiContext?.Post(_ => OnWatchdogTick(), null), null, WatchdogInterval, WatchdogInterval);
+    }
+
+    private void OnWatchdogTick()
+    {
+        if (_tracker.Tick(DateTime.UtcNow))
+        {
+            Stop();
+        }
+        else if (!_tracker.IsDown)
+        {
+            _watchdog?.Dispose();
+            _watchdog = null;
+        }
+    }
+
+    private void Stop()
+    {
+        _watchdog?.Dispose();
+        _watchdog = null;
+        try
+        {
+            PushToTalkStopped?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"FlowWhisper hotkey handler failed: {ex}");
+        }
+    }
+
     public void Dispose()
     {
+        _watchdog?.Dispose();
+        _watchdog = null;
         if (_hookHandle != 0)
         {
             Win32.UnhookWindowsHookEx(_hookHandle);

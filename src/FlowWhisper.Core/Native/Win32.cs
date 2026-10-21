@@ -39,6 +39,12 @@ internal static class Win32
     [DllImport("kernel32.dll")]
     public static extern nint GetModuleHandle(string? lpModuleName);
 
+    [DllImport("user32.dll")]
+    public static extern nint GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    public static extern uint GetWindowThreadProcessId(nint hWnd, out uint processId);
+
     // ---- Clipboard ----
 
     public const uint CF_UNICODETEXT = 13;

@@ -4,6 +4,32 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-10-21
+
+### Added
+
+- A splash window shows while FlowWhisper starts, then says it's ready and which key
+  to hold.
+- A "Bar transparency" setting (0–100 %) for the dictation bar and the splash. Moving the
+  slider shows the bar right away.
+- Dictating into remote desktops (Omnissa Horizon, Citrix, Microsoft Remote Desktop):
+  FlowWhisper detects the client, gives its clipboard redirection time to copy the text
+  over before pasting, and restores the clipboard later.
+- A note in Settings, with a link to Windows' keyboard settings, when Shift is the
+  dictation key.
+
+### Changed
+
+- New installs use Right Ctrl as the dictation key. Holding Right Shift for 8 seconds
+  makes Windows offer Filter Keys, and pressing Shift five times offers Sticky Keys.
+  Existing settings are kept.
+
+### Fixed
+
+- Recording no longer gets stuck when a remote-desktop client swallows the key release.
+  The keyboard hook moves ahead of the client's when dictation starts, and recording stops
+  if the key stops auto-repeating, or after 3 minutes at the latest.
+
 ## [0.1.3] - 2026-10-21
 
 ### Added
@@ -57,6 +83,7 @@ First public release.
 - Detection of silent microphones and filtering of Whisper hallucinations.
 - Per-user installer (Velopack) and a portable zip.
 
+[0.1.4]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.0...v0.1.1

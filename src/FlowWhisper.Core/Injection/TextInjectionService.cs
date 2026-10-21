@@ -21,19 +21,34 @@ public sealed class TextInjectionService(nint clipboardOwner) : ITextInjectionSe
 
     private static readonly TimeSpan TypingCharDelay = TimeSpan.FromMilliseconds(8);
 
-    public string InjectText(string text)
+    /// <summary>
+    /// Remote-desktop clients copy the local clipboard to the remote machine asynchronously
+    /// when it changes; Ctrl+V sent before that lands pastes whatever was there before.
+    /// </summary>
+    private static readonly TimeSpan RemoteSyncDelay = TimeSpan.FromMilliseconds(400);
+
+    /// <summary>The remote side reads its own copy late too, so restore well after the paste.</summary>
+    private static readonly TimeSpan RemoteRestoreDelay = TimeSpan.FromSeconds(3);
+
+    public async Task<string> InjectTextAsync(string text)
     {
         if (string.IsNullOrEmpty(text))
         {
             return "Clipboard";
         }
 
+        var remote = RemoteDesktopClients.IsForegroundRemote();
         var snapshot = Clipboard.TakeSnapshot(clipboardOwner);
-        var sequence = Clipboard.SetText(clipboardOwner, text);
+        var sequence = Clipboard.SetText(clipboardOwner, text, @private: !remote);
         if (sequence is null)
         {
             TypePaced(text);
             return "Typed";
+        }
+
+        if (remote)
+        {
+            await Task.Delay(RemoteSyncDelay);
         }
 
         if (!SendCtrlV())
@@ -45,22 +60,22 @@ public sealed class TextInjectionService(nint clipboardOwner) : ITextInjectionSe
 
         if (snapshot is not null)
         {
-            ScheduleRestore(snapshot, sequence.Value);
+            ScheduleRestore(snapshot, sequence.Value, remote ? RemoteRestoreDelay : RestoreDelay);
         }
         else
         {
             System.Diagnostics.Trace.WriteLine("Clipboard snapshot unavailable; nothing to restore.");
         }
 
-        return "Clipboard";
+        return remote ? "Remote" : "Clipboard";
     }
 
-    private void ScheduleRestore(Clipboard.Snapshot snapshot, uint sequence)
+    private void ScheduleRestore(Clipboard.Snapshot snapshot, uint sequence, TimeSpan delay)
     {
         // Restore on the same thread when one has a synchronization context (the app's
         // UI thread); clipboard calls are then serialized with any other UI-thread use.
         var context = SynchronizationContext.Current;
-        _ = Task.Delay(RestoreDelay).ContinueWith(_ =>
+        _ = Task.Delay(delay).ContinueWith(_ =>
         {
             void Restore() => Clipboard.Restore(clipboardOwner, snapshot, sequence);
             if (context is null)

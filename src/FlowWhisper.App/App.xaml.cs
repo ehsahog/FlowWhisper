@@ -24,6 +24,8 @@ namespace FlowWhisper_App;
 public partial class App : Application
 {
     private MainWindow? _mainWindow;
+    private SplashWindow? _splash;
+    private static readonly TimeSpan SplashMaxTime = TimeSpan.FromSeconds(10);
     private TaskbarIcon? _trayIcon;
     private FlowBarWindow? _flowBar;
     private IHotkeyService? _hotkeyService;
@@ -106,6 +108,19 @@ public partial class App : Application
         // Before any window is built, so they all start in the right language.
         Strings = LanguageResolver.ResolveUi(_settings.UiLanguage, WindowsUiCulture);
 
+        _splash = new SplashWindow();
+        _splash.SetTransparency(_settings.GlassTransparency);
+        _splash.ShowSplash(Strings.SplashLoading);
+
+        // At low priority so the splash gets painted first: the work below keeps this
+        // thread busy for a second or two, which otherwise showed the splash as a white box.
+        _uiDispatcher.TryEnqueue(Microsoft.UI.Dispatching.DispatcherQueuePriority.Low, ContinueLaunch);
+    }
+
+    private void ContinueLaunch()
+    {
+        var uiDispatcher = _uiDispatcher!;
+
         _trayIcon = (TaskbarIcon)Resources["TrayIcon"];
         var menu = (MenuFlyout)_trayIcon.ContextFlyout!;
         // H.NotifyIcon turns the flyout into a native Win32 menu and invokes each item's
@@ -125,6 +140,7 @@ public partial class App : Application
         _textInjectionService = new TextInjectionService(WinRT.Interop.WindowNative.GetWindowHandle(_mainWindow));
 
         _flowBar = new FlowBarWindow();
+        _flowBar.SetTransparency(_settings.GlassTransparency);
 
         _historyStore = Services.GetRequiredService<IHistoryStore>();
 
@@ -142,12 +158,27 @@ public partial class App : Application
         var installer = Services.GetRequiredService<AssetInstaller>();
         if (installer.IsWhisperInstalled(_settings.WhisperModel))
         {
-            ReloadTranscriptionService();
+            ReloadTranscriptionService(loaded => uiDispatcher.TryEnqueue(() => FinishSplash(loaded)));
+
+            // A first load on a new device compiles the model for minutes; don't keep the
+            // splash up that long. The FlowBar explains if the user dictates before it's done.
+            var timeout = uiDispatcher.CreateTimer();
+            timeout.Interval = SplashMaxTime;
+            timeout.IsRepeating = false;
+            timeout.Tick += (_, _) =>
+            {
+                if (Interlocked.Exchange(ref _splash, null) is { } splash)
+                {
+                    splash.Finish(Strings.SplashStillLoading, TimeSpan.FromSeconds(3));
+                }
+            };
+            timeout.Start();
         }
         else
         {
             // First run: nothing works until the speech model is downloaded, so show
             // the window with the download card instead of sitting silently in the tray.
+            Interlocked.Exchange(ref _splash, null)?.Close();
             _mainWindow.AppWindow.Show();
             _mainWindow.Activate();
         }
@@ -163,7 +194,7 @@ public partial class App : Application
         {
             while (Program.ShowSettingsRequested.WaitOne())
             {
-                _uiDispatcher!.TryEnqueue(OpenSettingsWindow);
+                uiDispatcher.TryEnqueue(OpenSettingsWindow);
             }
         })
         { IsBackground = true, Name = "ShowSettingsListener" }.Start();
@@ -186,7 +217,25 @@ public partial class App : Application
         }
     }
 
-    private void ReloadTranscriptionService()
+    private void FinishSplash(bool loaded)
+    {
+        if (Interlocked.Exchange(ref _splash, null) is not { } splash)
+        {
+            return;
+        }
+
+        if (loaded)
+        {
+            splash.Finish(Strings.SplashReady(Strings.KeyName(_settings.PushToTalkHotkey)), TimeSpan.FromSeconds(1.8));
+        }
+        else
+        {
+            splash.Close(); // The load error is logged; dictating shows what's wrong.
+        }
+    }
+
+    /// <param name="loaded">Called from a background thread when loading ends; true on success.</param>
+    private void ReloadTranscriptionService(Action<bool>? loaded = null)
     {
         var model = _settings.WhisperModel;
         var device = _settings.WhisperDevice;
@@ -199,6 +248,7 @@ public partial class App : Application
             (old as IDisposable)?.Dispose();
             if (!Services.GetRequiredService<AssetInstaller>().IsWhisperInstalled(model))
             {
+                loaded?.Invoke(false);
                 return;
             }
 
@@ -219,10 +269,13 @@ public partial class App : Application
                 {
                     service.Dispose();
                 }
+
+                loaded?.Invoke(true);
             }
             catch (Exception ex)
             {
                 LogError($"Couldn't load Whisper ({model} on {device}): {ex.Message}");
+                loaded?.Invoke(false);
             }
         });
     }
@@ -241,6 +294,8 @@ public partial class App : Application
             ApplyTrayTexts();
             StringsChanged?.Invoke();
         }
+
+        _flowBar?.SetTransparency(updated.GlassTransparency);
 
         var whisperChanged = updated.WhisperModel != _settings.WhisperModel
             || updated.WhisperDevice != _settings.WhisperDevice;
@@ -452,17 +507,24 @@ public partial class App : Application
 
                 var (finalText, cleanupStatus) = await CleanupOrFallbackAsync(rawText);
 
-                _uiDispatcher!.TryEnqueue(() =>
+                // async void is fine here: everything inside is caught, and the injection's
+                // waits must resume on the UI thread that owns the clipboard window.
+                _uiDispatcher!.TryEnqueue(async () =>
                 {
                     string method;
                     try
                     {
-                        method = _textInjectionService!.InjectText(finalText);
+                        method = await _textInjectionService!.InjectTextAsync(finalText);
                     }
                     catch (InvalidOperationException)
                     {
                         method = "Blocked";
                         ShowTransientError(Strings.PasteBlocked);
+                    }
+                    catch (Exception ex)
+                    {
+                        method = "Failed";
+                        ShowTransientError(Strings.TranscriptionFailed(ex.Message));
                     }
 
                     _ = _historyStore?.AddAsync(new HistoryEntry
@@ -581,6 +643,24 @@ public partial class App : Application
                 _flowBar!.HideBar();
             }
         }));
+    }
+
+    /// <summary>Shows the FlowBar at a transparency the user is trying out in Settings (not saved yet).</summary>
+    public void PreviewGlass(int percent)
+    {
+        if (_flowBar is null)
+        {
+            return;
+        }
+
+        // Every slider step restarts the hide timer, so the bar stays up while dragging.
+        Interlocked.Increment(ref _barSession);
+        _flowBar.SetTransparency(percent);
+        _flowBar.SetStatus("FlowWhisper");
+        _flowBar.SetTranscript(Strings.GlassPreview);
+        _flowBar.ResetWaveform();
+        _flowBar.ShowBar();
+        HideFlowBarAfterDelay();
     }
 
     private void OnVolumeChanged(float level)

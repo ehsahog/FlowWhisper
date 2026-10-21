@@ -12,7 +12,7 @@ for Swedish dictation, and it works in Whisper's other languages too.
 
 ## Features
 
-- **Push-to-talk** with a configurable key (default: Right Shift).
+- **Push-to-talk** with a configurable key (default: Right Ctrl).
 - **Local speech recognition**: Whisper large-v3-turbo (best quality) or small (fastest),
   running on the GPU, NPU or CPU via OpenVINO.
 - **Floating glass bar** with a live waveform, so you can see the microphone is picking you
@@ -45,12 +45,33 @@ for Swedish dictation, and it works in Whisper's other languages too.
    Click **More info → Run anyway**.
 3. On first start, FlowWhisper asks to download the speech model. Each file is
    checked against a pinned SHA-256 hash.
-4. Hold **Right Shift**, speak, and release.
+4. Hold **Right Ctrl**, speak, and release. A short splash shows when FlowWhisper has started.
 
 The app lives in the system tray, and right-clicking the icon opens Settings. To uninstall, go
 to Windows **Settings → Apps**. Models and history in `%LOCALAPPDATA%\FlowWhisper` are
 kept, so you can delete that folder too if you want everything gone.
 
+## Remote desktops (VDI)
+
+FlowWhisper also works with Omnissa (VMware) Horizon, Citrix and Microsoft Remote Desktop.
+Click into the remote session, hold the dictation key, speak, and release. The text is
+transcribed on your own PC and pasted into the remote session through its clipboard.
+
+- **Clipboard redirection must be allowed from client to remote.** In Horizon this is a
+  policy set by your administrator ("Configure clipboard redirection"). If it's blocked, the
+  paste arrives empty or with old clipboard content.
+- FlowWhisper waits briefly before pasting so the client can copy the text to the remote
+  side, and it restores your clipboard only after a few seconds.
+- Remote clients grab the keyboard, which used to make FlowWhisper miss the key release
+  and keep recording. It now re-registers its keyboard hook ahead of the client's and stops
+  on its own if the key stops repeating, or after 3 minutes at the latest.
+
+## Shift as the dictation key
+
+Windows reacts to Shift by itself: holding Right Shift for 8 seconds offers **Filter Keys**,
+and pressing Shift five times offers **Sticky Keys**. That's why the default key is Right Ctrl.
+If you prefer Shift, turn those shortcuts off under **Settings → Accessibility → Keyboard**.
+The FlowWhisper settings page has a button that opens it.
 ## Build from source
 
 You need the .NET 10 SDK (see `global.json`).

@@ -49,7 +49,11 @@ internal static class Clipboard
     }
 
     /// <summary>Places text on the clipboard. Returns the clipboard sequence number afterwards, or null on failure.</summary>
-    public static uint? SetText(nint owner, string text)
+    /// <param name="private">
+    /// Keep the text out of Win+V history, cloud sync and clipboard monitors. Off for remote
+    /// desktops: their clipboard redirection is such a monitor and may skip marked content.
+    /// </param>
+    public static uint? SetText(nint owner, string text, bool @private = true)
     {
         if (!TryOpen(owner))
         {
@@ -70,10 +74,13 @@ internal static class Clipboard
                 return null;
             }
 
-            // Dictations shouldn't pile up in Win+V history or roam to other devices.
-            SetMemory(ExcludeFromMonitoring, [0]);
-            SetMemory(CanIncludeInHistory, BitConverter.GetBytes(0));
-            SetMemory(CanUploadToCloud, BitConverter.GetBytes(0));
+            if (@private)
+            {
+                // Dictations shouldn't pile up in Win+V history or roam to other devices.
+                SetMemory(ExcludeFromMonitoring, [0]);
+                SetMemory(CanIncludeInHistory, BitConverter.GetBytes(0));
+                SetMemory(CanUploadToCloud, BitConverter.GetBytes(0));
+            }
         }
         finally
         {
