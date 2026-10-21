@@ -4,6 +4,13 @@ All notable changes to FlowWhisper are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the
 project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.5] - 2026-10-21
+
+### Changed
+
+- The splash window has a minimal edge: one faint hairline instead of the colored rim
+  and Windows' window outline.
+
 ## [0.1.4] - 2026-10-21
 
 ### Added
@@ -83,6 +90,7 @@ First public release.
 - Detection of silent microphones and filtering of Whisper hallucinations.
 - Per-user installer (Velopack) and a portable zip.
 
+[0.1.5]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/ehsahog/FlowWhisper/compare/v0.1.1...v0.1.2

@@ -30,17 +30,9 @@
                 </Rectangle.Fill>
             </Rectangle>
         </Grid>
-        <Border IsHitTestVisible="False" BorderThickness="1" CornerRadius="8" BorderBrush="#4D2A3A5A" />
-        <Border IsHitTestVisible="False" Margin="1" BorderThickness="1.5" CornerRadius="7">
-            <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Offset="0" Color="#FFFFFFFF" />
-                    <GradientStop Offset="0.35" Color="#CCB8E2FF" />
-                    <GradientStop Offset="0.65" Color="#B3D9C2FF" />
-                    <GradientStop Offset="1" Color="#E6FFFFFF" />
-                </LinearGradientBrush>
-            </Border.BorderBrush>
-        </Border>
+        <!-- Minimal edge: one faint hairline instead of the FlowBar's rim (Windows' own
+             window border is turned off in code-behind). -->
+        <Border IsHitTestVisible="False" BorderThickness="1" CornerRadius="8" BorderBrush="#40FFFFFF" />
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="10" Padding="24,0">
             <Image x:Name="AppIconImage" Width="56" Height="56" HorizontalAlignment="Center" />

@@ -36,6 +36,8 @@ public sealed partial class SplashWindow : Window
         var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var preference = 2; // DWMWCP_ROUND
         DwmSetWindowAttribute(hwnd, 33 /* DWMWA_WINDOW_CORNER_PREFERENCE */, ref preference, sizeof(int));
+        var noBorder = unchecked((int)0xFFFFFFFE); // DWMWA_COLOR_NONE: no Windows 11 window outline
+        DwmSetWindowAttribute(hwnd, 34 /* DWMWA_BORDER_COLOR */, ref noBorder, sizeof(int));
 
         var work = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Primary).WorkArea;
         AppWindow.Move(new PointInt32(
